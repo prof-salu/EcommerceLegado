@@ -1,13 +1,24 @@
 public class DatabaseConnection {
-    // ERRO: O construtor é público! Qualquer classe pode instanciar uma nova conexão.
-    public DatabaseConnection() {
-        System.out.println("[BANCO DE DADOS] Nova conexão física criada! (Consumindo recursos...)");
+
+    // 1. Atributo estático que guarda a instância única
+    private static DatabaseConnection instancia;
+
+    // 2. Construtor privado: impede o uso de 'new' fora da classe
+    private DatabaseConnection() {
+        System.out.println("[BANCO DE DADOS] Nova conexão física criada! (Apenas uma vez)");
         try {
-            // Simulando o tempo de abertura de uma conexão pesada
-            Thread.sleep(2000);
+            Thread.sleep(500); // Simula lentidão de conexão
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    // 3. Ponto global de acesso
+    public static DatabaseConnection getInstance() {
+        if (instancia == null) {
+            instancia = new DatabaseConnection();
+        }
+        return instancia;
     }
 
     public void salvarPedido(String dados) {
