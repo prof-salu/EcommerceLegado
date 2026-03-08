@@ -1,55 +1,37 @@
 public class Main {
     public static void main(String[] args) {
-        System.out.println("=== SISTEMA DE E-COMMERCE (LEGADO) ===\n");
+        System.out.println("=== SISTEMA DE E-COMMERCE (REFATORADO) ===\n");
 
-        // ------------------------------------------------------------------------
-        // LABORATÓRIO 1: O Problema do Singleton
-        // O sistema está abrindo 3 conexões diferentes. Se 1000 clientes
-        // comprarem ao mesmo tempo, o banco de dados vai cair.
-        // ------------------------------------------------------------------------
-        System.out.println("--- Conectando ao Banco de Dados ---");
-        DatabaseConnection db1 = new DatabaseConnection();
-        DatabaseConnection db2 = new DatabaseConnection();
-        DatabaseConnection db3 = new DatabaseConnection();
-
-        System.out.println("O db1 é igual ao db2? " + (db1 == db2)); // Imprime 'false' (São instâncias diferentes)
+        System.out.println("--- 1. Testando o Singleton ---");
+        // O banco será instanciado apenas na primeira chamada
+        DatabaseConnection db1 = DatabaseConnection.getInstance();
+        DatabaseConnection db2 = DatabaseConnection.getInstance();
+        System.out.println("db1 e db2 são a mesma instância em memória? " + (db1 == db2));
         System.out.println();
 
+        System.out.println("--- 2. Testando o Builder ---");
+        // Criação fluente, limpa e legível (sem construtores gigantes e confusos)
+        Pedido pedido = new Pedido.PedidoBuilder()
+                .comCliente("João Silva")
+                .comProduto("Notebook Dell", 5500.0)
+                .comEndereco("Rua das Flores, 123")
+                .embalarParaPresente()
+                .build();
 
-        // ------------------------------------------------------------------------
-        // LABORATÓRIO 3: O Problema do Builder
-        // Um pesadelo de ler e manter. O que significa "null, true, false"?
-        // ------------------------------------------------------------------------
-        System.out.println("--- Criando Pedido ---");
-        Pedido pedido = new Pedido("João Silva", "Rua das Flores, 123", "Notebook Dell",
-                5500.0, null, true, false, 50.0);
         System.out.println("Criado: " + pedido.toString());
         System.out.println();
 
-
-        // ------------------------------------------------------------------------
-        // LABORATÓRIO 2: O Problema do Factory Method
-        // Alto acoplamento. Toda vez que um novo meio de pagamento for criado (ex: Criptomoeda),
-        // precisaremos abrir a classe Main (ou Checkout) e adicionar um novo 'else if'.
-        // ------------------------------------------------------------------------
-        System.out.println("--- Processando Pagamento ---");
-        String tipoPagamentoEscolhido = "PIX"; // Simula a escolha do utilizador na tela
-        Pagamento pagamento = null;
-
-        if (tipoPagamentoEscolhido.equals("CREDITO")) {
-            pagamento = new PagamentoCredito();
-        } else if (tipoPagamentoEscolhido.equals("BOLETO")) {
-            pagamento = new PagamentoBoleto();
-        } else if (tipoPagamentoEscolhido.equals("PIX")) {
-            pagamento = new PagamentoPix();
-        } else {
-            System.out.println("Meio de pagamento desconhecido!");
-        }
-
-        if (pagamento != null) {
+        System.out.println("--- 3. Testando o Factory Method ---");
+        // O Main não sabe como instanciar o Pix, ele apenas pede à Fábrica
+        try {
+            Pagamento pagamento = PagamentoFactory.criarPagamento("PIX");
             pagamento.processar(pedido.getValor());
-            // Salvando no banco (usando uma das várias conexões criadas)
+
+            // Salvando no banco de dados único
             db1.salvarPedido(pedido.toString());
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("Erro ao processar pagamento: " + e.getMessage());
         }
     }
 }
